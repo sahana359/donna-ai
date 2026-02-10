@@ -6,8 +6,12 @@ from fastapi import APIRouter, Request, Query, HTTPException
 
 from models import WebhookResponse
 from utils import log
+from collections import defaultdict
+from routes.chat import chat, ChatRequest
+import re
 
 router = APIRouter()
+session_segments: Dict[str, List[Dict]] = defaultdict(list)
 
 
 @router.post("/webhook", response_model=WebhookResponse)
@@ -49,6 +53,19 @@ async def webhook(
                 text = seg.get('text', 'NO TEXT') if isinstance(seg, dict) else str(seg)
                 log(f"   Segment {i+1}: {text}")
         
+        session_segments[session_id].extend(segments)
+    
+        # Check for trigger in accumulated text
+        full_text = " ".join(s.get("text", "") for s in session_segments[session_id])
+        
+        if re.search(r"hey[\s,\.]*donna", full_text.lower()):
+            log(f"Hi Donna detected 🤖🤖🤖🤖")
+            chat_request = ChatRequest(message=full_text)
+            log(f"🤖 Sending Chat request: {chat_request.message}")
+            chat_response = await chat(chat_request)
+            log(f"🤖 Chat response: {chat_response.message}")
+        
+        # Process accumulated context
         # TODO: In next iteration, we'll:
         # 1. Accumulate segments per session
         # 2. Detect "Hey, donna" trigger
