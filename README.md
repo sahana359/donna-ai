@@ -1,10 +1,10 @@
 # Donna AI
 
-AI-powered Personal Assistant with Voice Interface and Calendar Integration
+AI-powered Personal Assistant with Voice Interface and Productivity Integrations
 
 ## Overview
 
-Donna AI is an intelligent voice-activated personal assistant that integrates with the OMI wearable device and provides calendar management capabilities. The system consists of a FastAPI backend powered by Claude AI (Anthropic) and a native iOS SwiftUI application for chat interactions.
+Donna AI is an intelligent voice-activated personal assistant that integrates with the OMI wearable device and provides comprehensive productivity management through Google Calendar, Notion, and Gmail integrations. The system consists of a FastAPI backend powered by Claude AI (Anthropic) and a native iOS SwiftUI application for chat interactions.
 
 ## Architecture
 
@@ -35,7 +35,9 @@ The project follows a **client-server architecture** with three main components:
 │                    ▼                         │
 │  ┌───────────────────────────────────────┐  │
 │  │  MCP Manager (Model Context Protocol) │  │
-│  │  - Google Calendar Server Integration │  │
+│  │  - Google Calendar Integration        │  │
+│  │  - Notion Workspace Integration       │  │
+│  │  - Gmail Integration                  │  │
 │  │  - Tool execution via stdio           │  │
 │  └───────────────────────────────────────┘  │
 └─────────────────────────────────────────────┘
@@ -88,6 +90,12 @@ The backend is built with **FastAPI** (Python 3.13+) and provides the core intel
      - Executes tool calls
    - **`servers/calendar.py`** - Google Calendar server configuration
      - Connects to `@cocal/google-calendar-mcp` via npx
+     - Requires OAuth credentials
+   - **`servers/notion.py`** - Notion workspace server configuration
+     - Connects to `@modelcontextprotocol/server-notion` via npx
+     - Requires Notion API token
+   - **`servers/gmail.py`** - Gmail server configuration
+     - Connects to `@modelcontextprotocol/server-gmail` via npx
      - Requires OAuth credentials
 
 5. **`models/`** - Pydantic data models
@@ -180,22 +188,39 @@ The AI agent uses **Claude** with the **Model Context Protocol (MCP)** for tool 
 
 #### Available Tools:
 
-Via Google Calendar MCP Server (`@cocal/google-calendar-mcp`):
-- Create events
+**Via Google Calendar MCP Server** (`@cocal/google-calendar-mcp`):
+- Create calendar events
 - List events
 - Update events
 - Delete events
 - Search calendar
 - Check availability
 
+**Via Notion MCP Server** (`@modelcontextprotocol/server-notion`):
+- Create pages and databases
+- Update page content
+- Search workspace
+- Query databases
+- Add comments
+- Manage blocks
+
+**Via Gmail MCP Server** (`@modelcontextprotocol/server-gmail`):
+- Send emails
+- Read emails
+- Search inbox
+- Create drafts
+- Manage labels
+- Archive/delete messages
+
 ## Setup and Installation
 
 ### Prerequisites
 
 - **Python 3.13+**
-- **Node.js and npm** (for MCP Google Calendar server)
+- **Node.js and npm** (for MCP servers)
 - **Xcode** (for iOS app development)
-- **Google OAuth credentials** (for calendar access)
+- **Google OAuth credentials** (for Calendar and Gmail access)
+- **Notion API token** (for Notion workspace access)
 - **Anthropic API key** (for Claude AI)
 
 ### Backend Setup
@@ -218,6 +243,8 @@ Via Google Calendar MCP Server (`@cocal/google-calendar-mcp`):
    ```env
    ANTHROPIC_API_KEY=your_anthropic_api_key
    GOOGLE_OAUTH_CREDENTIALS=your_google_oauth_credentials_json
+   NOTION_API_TOKEN=your_notion_integration_token
+   GMAIL_OAUTH_CREDENTIALS=your_gmail_oauth_credentials_json
    PORT=8000
    HOST=0.0.0.0
    ```
@@ -272,6 +299,8 @@ Via Google Calendar MCP Server (`@cocal/google-calendar-mcp`):
 1. Wear your OMI device
 2. Say: "Hey Donna, [your instruction]"
    - Example: "Hey Donna, schedule a meeting tomorrow at 2pm"
+   - Example: "Hey Donna, send an email to john@example.com about the project"
+   - Example: "Hey Donna, create a note in Notion about today's meeting"
 3. Wait for processing (10-second silence detection)
 4. AI will execute the task using available tools
 
@@ -292,6 +321,7 @@ Features:
 
 #### Chat Endpoint
 
+**Example 1: Schedule a Calendar Event**
 ```bash
 curl -X POST http://localhost:8000/chat \
   -H "Content-Type: application/json" \
@@ -305,6 +335,40 @@ Response:
 ```json
 {
   "text": "I've scheduled the meeting for tomorrow at 2pm."
+}
+```
+
+**Example 2: Send an Email**
+```bash
+curl -X POST http://localhost:8000/chat \
+  -H "Content-Type: application/json" \
+  -d '{
+    "message": "Send an email to john@example.com with subject Project Update",
+    "session_id": "user123"
+  }'
+```
+
+Response:
+```json
+{
+  "text": "I've sent the email to john@example.com with the subject Project Update."
+}
+```
+
+**Example 3: Create a Notion Page**
+```bash
+curl -X POST http://localhost:8000/chat \
+  -H "Content-Type: application/json" \
+  -d '{
+    "message": "Create a new note in Notion about our team meeting",
+    "session_id": "user123"
+  }'
+```
+
+Response:
+```json
+{
+  "text": "I've created a new page in Notion with notes about your team meeting."
 }
 ```
 
@@ -342,6 +406,8 @@ Response:
 |----------|-------------|----------|
 | `ANTHROPIC_API_KEY` | API key for Claude AI | Yes |
 | `GOOGLE_OAUTH_CREDENTIALS` | JSON credentials for Google Calendar | Yes |
+| `GMAIL_OAUTH_CREDENTIALS` | JSON credentials for Gmail access | Yes |
+| `NOTION_API_TOKEN` | API token for Notion workspace | Yes |
 | `PORT` | Backend server port | No (default: 8000) |
 | `HOST` | Backend server host | No (default: 0.0.0.0) |
 
@@ -360,12 +426,14 @@ Response:
 ## Features
 
 ✅ **Voice Activation** - Trigger with "Hey Donna" or similar phrases  
-✅ **Calendar Management** - Create, list, update, delete events  
+✅ **Calendar Management** - Create, list, update, delete events via Google Calendar  
+✅ **Email Management** - Send, read, search emails via Gmail  
+✅ **Note Taking** - Create pages, search content, manage databases in Notion  
 ✅ **Conversation Context** - Multi-turn conversations with history  
 ✅ **OMI Device Integration** - Real-time voice transcript processing  
 ✅ **iOS Native App** - SwiftUI chat interface  
 ✅ **Agentic AI** - Claude with tool-use capabilities  
-✅ **MCP Integration** - Extensible tool system  
+✅ **MCP Integration** - Extensible tool system with multiple services  
 ✅ **Development Testing** - Web-based test interface  
 ✅ **Session Management** - Per-user conversation tracking  
 
@@ -377,6 +445,8 @@ Response:
 - Anthropic Claude AI (LLM)
 - Model Context Protocol (Tool Integration)
 - Google Calendar API (via MCP)
+- Gmail API (via MCP)
+- Notion API (via MCP)
 - Uvicorn (ASGI Server)
 
 **Frontend:**
@@ -388,6 +458,7 @@ Response:
 - OMI Wearable Device
 - Webhook-based real-time transcription
 - OAuth 2.0 (Google Authentication)
+- Notion API (Workspace Integration)
 
 ## Project Structure
 
@@ -409,6 +480,8 @@ donna-ai/
 │   │   ├── manager.py         # MCP connection manager
 │   │   ├── servers/
 │   │   │   ├── calendar.py    # Google Calendar config
+│   │   │   ├── gmail.py       # Gmail config
+│   │   │   ├── notion.py      # Notion config
 │   │   │   └── __init__.py
 │   │   └── __init__.py
 │   ├── models/
@@ -474,3 +547,5 @@ Current version: **0.1.0**
 - Integrates with [OMI Device](https://www.omi.me/)
 - Uses [Model Context Protocol](https://modelcontextprotocol.io/)
 - Google Calendar integration via [@cocal/google-calendar-mcp](https://github.com/cocal-io/google-calendar-mcp)
+- Gmail integration via [@modelcontextprotocol/server-gmail](https://github.com/modelcontextprotocol/servers/tree/main/src/gmail)
+- Notion integration via [@modelcontextprotocol/server-notion](https://github.com/modelcontextprotocol/servers/tree/main/src/notion)
