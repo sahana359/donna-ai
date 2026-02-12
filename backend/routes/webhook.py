@@ -23,7 +23,7 @@ TRIGGER_PATTERN = re.compile(
 )
 
 
-async def _debounce_and_process(session_id: str):
+async def _debounce_and_process(session_id: str, uid: str):
     """Wait for silence, then extract instruction after trigger and send to chat."""
     try:
         await asyncio.sleep(DEBOUNCE_SECONDS)
@@ -51,7 +51,7 @@ async def _debounce_and_process(session_id: str):
 
     log(f"Processing instruction for session {session_id}: {instruction}")
     try:
-        chat_response = await chat(ChatRequest(message=instruction))
+        chat_response = await chat(ChatRequest(message=instruction, session_id=uid))
         log(f"Chat response for session {session_id}: {chat_response.text}")
     except Exception as e:
         log(f"Error processing chat for session {session_id}: {e}")
@@ -104,7 +104,7 @@ async def webhook(
 
             # Start a fresh 5-second debounce timer as a background task
             session_timers[session_id] = asyncio.create_task(
-                _debounce_and_process(session_id)
+                _debounce_and_process(session_id, uid)
             )
 
         return WebhookResponse(

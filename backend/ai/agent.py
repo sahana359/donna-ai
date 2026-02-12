@@ -15,26 +15,29 @@ def _get_claude_client() -> Anthropic:
 async def run_agent(
     manager: MCPManager,
     user_message: str,
+    history: list = None,
     model: str = "claude-3-5-haiku-20241022",
     max_tokens: int = 4096,
     on_tool_call: callable = None
-) -> str:
+) -> tuple[str, list]:
     """
     Runs the Claude agentic loop with MCP tools.
-    
+
     Args:
         manager: Connected MCPManager instance
         user_message: User's input message
+        history: Prior conversation messages for context
         model: Claude model to use
         max_tokens: Maximum tokens in response
         on_tool_call: Optional callback(tool_name, tool_input) for logging
-        
+
     Returns:
-        Claude's final text response
+        Tuple of (final_response_text, updated_messages_list)
     """
     client = _get_claude_client()
     tools = manager.get_tools()
-    messages = [{"role": "user", "content": user_message}]
+    messages = list(history) if history else []
+    messages.append({"role": "user", "content": user_message})
     
     while True:
         response = client.messages.create(
@@ -79,4 +82,4 @@ async def run_agent(
                 if hasattr(content, "text"):
                     final_response += content.text
             
-            return final_response
+            return final_response, messages
