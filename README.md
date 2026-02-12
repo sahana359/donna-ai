@@ -2,13 +2,22 @@
 
 AI-powered Personal Assistant with Voice Interface and Productivity Integrations
 
+> Donna - like Harvey's assistant from Suits, but AI-powered.
+>
+> Remember how Donna knew everything, anticipated needs,
+> and kept Harvey's life running smoothly? That's what
+> Donna AI does for you.
+>
+> She orchestrates your calendar, email, tasks, and reminders
+> so you can focus on what matters.
+
 ## Overview
 
 Donna AI is an intelligent voice-activated personal assistant that integrates with the OMI wearable device and provides comprehensive productivity management through Google Calendar, Notion, and Gmail integrations. The system consists of a FastAPI backend powered by Claude AI (Anthropic) and a native iOS SwiftUI application for chat interactions.
 
 ## Architecture
 
-The project follows a client-server architecture with three main components:
+The project follows a client-server architecture. The iOS app and OMI device both communicate with the backend's AI Agent, which orchestrates an agentic loop with MCP tools to execute tasks:
 
 ```
 ┌─────────────────┐
@@ -27,13 +36,15 @@ The project follows a client-server architecture with three main components:
 │                    │                         │
 │                    ▼                         │
 │  ┌───────────────────────────────────────┐  │
-│  │  AI Agent (Claude via Anthropic)     │  │
+│  │  AI Agent (Claude via Anthropic)     │◄─┼─── iOS App (Chat)
 │  │  - Agentic loop with tool calls       │  │
 │  │  - Conversation history management    │  │
-│  └───────────────────────────────────────┘  │
-│                    │                         │
-│                    ▼                         │
-│  ┌───────────────────────────────────────┐  │
+│  └───────┬───────────────────────────▲───┘  │
+│          │                           │       │
+│          │    ┌──────────────────────┘       │
+│          │    │   Agentic Loop               │
+│          ▼    │                              │
+│  ┌───────────┴───────────────────────────┐  │
 │  │  MCP Manager (Model Context Protocol) │  │
 │  │  - Google Calendar Integration        │  │
 │  │  - Notion Workspace Integration       │  │
@@ -41,13 +52,6 @@ The project follows a client-server architecture with three main components:
 │  │  - Tool execution via stdio           │  │
 │  └───────────────────────────────────────┘  │
 └─────────────────────────────────────────────┘
-         ▲
-         │
-┌────────┴────────┐
-│   iOS App       │  (SwiftUI Chat Interface)
-│   - ChatView    │
-│   - ChatService │
-└─────────────────┘
 ```
 
 ## Features
