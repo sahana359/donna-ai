@@ -15,7 +15,7 @@ def _get_claude_client() -> Anthropic:
 async def run_agent(
     manager: MCPManager,
     user_message: str,
-    model: str = "claude-sonnet-4-20250514",
+    model: str = "claude-3-5-haiku-20241022",
     max_tokens: int = 4096,
     on_tool_call: callable = None
 ) -> str:
